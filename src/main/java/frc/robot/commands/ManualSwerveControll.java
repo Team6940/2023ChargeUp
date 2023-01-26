@@ -1,17 +1,14 @@
 package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.CommandBase;
-import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.library.team1706.MathUtils;
 import edu.wpi.first.math.filter.SlewRateLimiter;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
-public class SwerveControll extends CommandBase {
+public class ManualSwerveControll extends CommandBase {
   /** Creates a new SwerveControll. */
   //double storedYaw;
   private boolean fieldOrient = false;
@@ -28,7 +25,7 @@ public class SwerveControll extends CommandBase {
   //private SlewRateLimiter ySpeedLimiter = new SlewRateLimiter(Constants.linarslewrate * Constants.kMaxSpeed);
   //private SlewRateLimiter omegaSpeedLimiter = new SlewRateLimiter(Constants.omegaslewrate * Constants.kMaxOmega);
 
-  public SwerveControll() {
+  public ManualSwerveControll() {
     // Use addRequirements() here to declare subsystem dependencies.
     addRequirements(RobotContainer.m_SwerveBase);
   }

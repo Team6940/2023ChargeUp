@@ -28,5 +28,15 @@
       "/FMSInfo": "FMSInfo",
       "/SmartDashboard/Debug/Drive/Field": "Field2d"
     }
+  },
+  "NetworkTables": {
+    "Retained Values": {
+      "open": false
+    },
+    "transitory": {
+      "SmartDashboard": {
+        "open": true
+      }
+    }
   }
 }

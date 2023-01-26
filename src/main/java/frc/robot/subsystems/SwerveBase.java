@@ -5,6 +5,7 @@ import com.ctre.phoenix.sensors.WPI_PigeonIMU;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -13,8 +14,10 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.ProfiledPIDCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.library.team1706.*;
 import frc.robot.Constants;
@@ -30,7 +33,7 @@ public class SwerveBase extends SubsystemBase {
 
     private static SwerveBase m_Instance = null;
     public static SwerveModuleState[] m_SwerveModuleStates = new SwerveModuleState[4];
-    
+
     /** Creates a new SwerveDriveTrain. */
     private static SwerveModule m_SwerveModules[] = new SwerveModule[4];//底盘的四个模块
   
@@ -131,7 +134,9 @@ public class SwerveBase extends SubsystemBase {
         m_SwerveModules[i].SetDesiredState(states[i],isOpenloop);
       }
     }
-  
+    public void DriveTo(Pose2d _TargetPose2d){
+
+    }
     public void SetModuleStates(SwerveModuleState[] desiredStates){
         SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, SwerveConstants.kMaxSpeed);
         for(int i = 0;i < m_SwerveModules.length;i++){
@@ -399,10 +404,6 @@ public class SwerveBase extends SubsystemBase {
       }
     }
     
-    public void MoveTo(Pose2d _TargetPose2d)
-    {
-      
-    }
     @Override
     public void periodic() {
       AutoCalibrateOdometry();

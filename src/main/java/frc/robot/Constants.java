@@ -6,6 +6,7 @@ package frc.robot;
 
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
  * constants. This class should not be used for any other purpose. All constants should be declared
@@ -37,6 +38,18 @@ public final class Constants {
                                                           // maximized simultaneously)
         public static final double kTranslationSlew = 1.45;
         public static final double kRotationSlew = 3.00;
+    }
+
+    public static final class SemiAutoConstants{
+        public static final double kSemiAutoVelocityP=0.10 ;//TODO
+        public static final double kSemiAutoVelocityI=0.00;//TODO
+        public static final double kSemiAutoVelocityD=0.05;//TODO
+        public static final Constraints kSemiAutoVelocityConstrants =new Constraints(4,1);//TODO
+        
+        public static final double kSemiAutoOmegaP=0.10 ;//TODO
+        public static final double kSemiAutoOmegaI=0.00;//TODO
+        public static final double kSemiAutoOmegaD=0.05;//TODO
+        public static final Constraints kSemiAutoOmegaConstrants =new Constraints(Math.PI,Math.PI);//TODO
     }
     
     public static final class SwerveConstants{

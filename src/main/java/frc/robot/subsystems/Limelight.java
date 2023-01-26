@@ -1,20 +1,10 @@
 package frc.robot.subsystems;
 
-import java.util.OptionalDouble;
-
-import edu.wpi.first.math.filter.MedianFilter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj.RobotBase;
-import frc.robot.library.team1706.LinearInterpolationTable;
-import pabeles.concurrency.ConcurrencyOps.NewInstance;
-
-import java.awt.geom.Point2D;
-
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Limelight extends SubsystemBase {
@@ -23,15 +13,15 @@ public class Limelight extends SubsystemBase {
     NetworkTable m_LimelightTable;
     public Limelight() 
     {
-        m_LimelightTable = NetworkTableInstance.getDefault().getTable("limelight");
+      m_LimelightTable = NetworkTableInstance.getDefault().getTable("limelight");
     }
     
      public static Limelight getInstance() 
     {
-        if (instance == null)
-        {
-            instance = new Limelight();
-        }
+      if (instance == null)
+      {
+          instance = new Limelight();  
+      }
         return instance;
       }
     /**
@@ -53,5 +43,10 @@ public class Limelight extends SubsystemBase {
       boolean _IsTargetLocked;
       _IsTargetLocked=m_LimelightTable.getEntry("tv").getBoolean(false);
       return _IsTargetLocked;
+    }
+    @Override
+    public void periodic()
+    {
+      SmartDashboard.putBoolean("IsTargetLocked",IsTargetLocked());
     }
 }
