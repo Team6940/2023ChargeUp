@@ -66,6 +66,7 @@ public class SwerveBase extends SubsystemBase {
   
     private double GyroRollVelocity = 0;
     private double m_LastGyroRoll = 0;
+    
   
     ShuffleboardTab m_SwerveDriveTab = Shuffleboard.getTab("Swerve");
     boolean m_EnanbleTelemetry = true;
