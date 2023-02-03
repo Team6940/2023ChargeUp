@@ -117,7 +117,7 @@ public class SwerveBase extends SubsystemBase {
   /**
    * 让swerve底盘动起来
    * @param translation 车子的移动方向
-   * @param omega 车子的角速度
+   * @param omega 车子的角速度，单位是radians
    * @param fieldRelative 是否以场地为参考系
    * @param isOpenloop 无意义参数，但是保留
    */
@@ -134,9 +134,6 @@ public class SwerveBase extends SubsystemBase {
       for(int i = 0;i < m_SwerveModules.length;i++ ){
         m_SwerveModules[i].SetDesiredState(states[i],isOpenloop);
       }
-    }
-    public void DriveTo(Pose2d _TargetPose2d){
-
     }
     public void SetModuleStates(SwerveModuleState[] desiredStates){
         SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, SwerveConstants.kMaxSpeed);

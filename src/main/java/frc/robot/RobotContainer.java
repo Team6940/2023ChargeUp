@@ -46,7 +46,7 @@ public class RobotContainer {
    */
   private void configureButtonBindings() 
   {
-    new JoystickButton(m_driverController, 1).onTrue(new SemiAutoSwerveControll(new Pose2d(40, 40,new Rotation2d())));
+    new JoystickButton(m_driverController, 1).onTrue(new SemiAutoSwerveControll(new Pose2d(0,0,new Rotation2d())));
   }
 
   /**

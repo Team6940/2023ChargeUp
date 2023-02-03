@@ -11,7 +11,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 public class ManualSwerveControll extends CommandBase {
   /** Creates a new SwerveControll. */
   //double storedYaw;
-  private boolean fieldOrient = false;
+  private boolean fieldOrient = true;
   //That means the joystick will reach the max range in 1/3 second
   //The may let the robot move smoothly.
   private final SlewRateLimiter m_slewX = new SlewRateLimiter(DriveConstants.kTranslationSlew);

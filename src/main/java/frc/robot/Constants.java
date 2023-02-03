@@ -44,12 +44,14 @@ public final class Constants {
         public static final double kSemiAutoVelocityP=0.10 ;//TODO
         public static final double kSemiAutoVelocityI=0.00;//TODO
         public static final double kSemiAutoVelocityD=0.05;//TODO
-        public static final Constraints kSemiAutoVelocityConstrants =new Constraints(4,1);//TODO
+        public static final Constraints kSemiAutoVelocityConstrants =new Constraints(1,1);//TODO
         
-        public static final double kSemiAutoOmegaP=0.10 ;//TODO
-        public static final double kSemiAutoOmegaI=0.00;//TODO
-        public static final double kSemiAutoOmegaD=0.05;//TODO
-        public static final Constraints kSemiAutoOmegaConstrants =new Constraints(Math.PI,Math.PI);//TODO
+        public static final double kSemiAutoOmegaP=3;//TODO
+        public static final double kSemiAutoOmegaI=0.0;//TODO
+        public static final double kSemiAutoOmegaD=0.0;//TODO
+        public static final Constraints kSemiAutoOmegaConstrants =new Constraints(1,100);//TODO
+        public static final double SemiAutoOmegaSlewRate=2;
+        public static final double SemiAutoOmegaMax=2;
     }
     
     public static final class SwerveConstants{
