@@ -4,6 +4,10 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
@@ -40,6 +44,10 @@ public final class Constants {
         public static final double kRotationSlew = 3.00;
     }
 
+    public static final class FieldConstants{
+        public static final double OdometryToFieldOffsetX= 8.23;
+        public static final double OdometryTOFieldOffsety=4.01;
+    }
     public static final class SemiAutoConstants{
         public static final double kSemiAutoVelocityP=0.10 ;//TODO
         public static final double kSemiAutoVelocityI=0.00;//TODO

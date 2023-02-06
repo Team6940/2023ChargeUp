@@ -10,7 +10,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 public class Limelight extends SubsystemBase {
     
   private static Limelight instance = null;
-    NetworkTable m_LimelightTable;
+    public NetworkTable m_LimelightTable;
     public Limelight() 
     {
       m_LimelightTable = NetworkTableInstance.getDefault().getTable("limelight");
@@ -31,22 +31,25 @@ public class Limelight extends SubsystemBase {
     public Pose2d GetPose2dBotPose()
     {
       double[] _BotPose={0,0,0,0,0,0};
+      if(m_LimelightTable.getEntry("botpose").getDoubleArray(_BotPose).length==6)
       _BotPose=m_LimelightTable.getEntry("botpose").getDoubleArray(_BotPose);
-      return new Pose2d(_BotPose[0],_BotPose[1],Rotation2d.fromDegrees(_BotPose[6]));
+      return new Pose2d(_BotPose[0],_BotPose[1],Rotation2d.fromDegrees(_BotPose[5]));
     }
     /**
      * 获取机器人视野里是否识别到目标
      * @return  视野里是否有目标，有为true 没有为false
      */
-    public boolean IsTargetLocked()
+    public double IsTargetLocked()
     {
-      boolean _IsTargetLocked;
-      _IsTargetLocked=m_LimelightTable.getEntry("tv").getBoolean(false);
+      double _IsTargetLocked;
+      _IsTargetLocked=m_LimelightTable.getEntry("tv").getDouble(0.0);
       return _IsTargetLocked;
     }
     @Override
     public void periodic()
     {
-      SmartDashboard.putBoolean("IsTargetLocked",IsTargetLocked());
+      // SmartDashboard.putNumber("IsTargetLocked",IsTargetLocked());
+      if(IsTargetLocked()==1.0)
+       SmartDashboard.putNumber("BotPoseX", GetPose2dBotPose().getX());
     }
 }

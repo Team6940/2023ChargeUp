@@ -23,6 +23,7 @@ import frc.robot.library.team1706.*;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.Constants.SwerveConstants;
+import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.GlobalConstants;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
@@ -125,7 +126,7 @@ public class SwerveBase extends SubsystemBase {
       var states = SwerveConstants.swerveKinematics.toSwerveModuleStates(
         fieldRelative ? 
         ChassisSpeeds.fromFieldRelativeSpeeds(
-          translation.getX(), translation.getY(), omega, GetGyroRotation2d())
+          translation.getX(), translation.getY(), omega, m_Odometry.getPoseMeters().getRotation())
         : new ChassisSpeeds(translation.getX() , translation.getY(), omega)
       );
   
@@ -387,19 +388,23 @@ public class SwerveBase extends SubsystemBase {
 
     private void AutoCalibrateOdometry()
     {
-      if(RobotContainer.m_Limelight.IsTargetLocked())
+      if(RobotContainer.m_Limelight.IsTargetLocked()==1.0&&m_IsTargetLocked==false)
       {
           m_IsTargetLocked=true;
           m_TargetLockedTime=Timer.getFPGATimestamp();
       }
-      else
+      if(RobotContainer.m_Limelight.IsTargetLocked()==0.0)
       {
           m_IsTargetLocked=false;
       }
       if(m_IsTargetLocked&&Timer.getFPGATimestamp()-m_TargetLockedTime>=Constants.SwerveConstants.AprilTagLockTime)
       {
           RobotContainer.m_SwerveBase.ResetOdometry(RobotContainer.m_Limelight.GetPose2dBotPose());
+          // zeroGyro(RobotContainer.m_Limelight.GetPose2dBotPose().getRotation().getDegrees());
       }
+      SmartDashboard.putNumber("getDegrees",RobotContainer.m_Limelight.GetPose2dBotPose().getRotation().getDegrees());
+      SmartDashboard.putBoolean("IsTargetLocked", m_IsTargetLocked);
+      SmartDashboard.putNumber("m_TargetLockedTime", m_TargetLockedTime);
     }
     
     @Override
@@ -419,7 +424,7 @@ public class SwerveBase extends SubsystemBase {
         GetGyroRotation2d(), 
         GetPositions());
   
-      m_Field.setRobotPose(getPose());
+      m_Field.setRobotPose(new Pose2d(getPose().getX()+FieldConstants.OdometryToFieldOffsetX,getPose().getY()+FieldConstants.OdometryTOFieldOffsety,getPose().getRotation()));
       if(m_EnanbleTelemetry){
         SmartDashboard.putNumber("GetSpeed0", m_SwerveModules[0].GetSpeed());
         SmartDashboard.putNumber("GetSpeed1", m_SwerveModules[1].GetSpeed());
