@@ -5,6 +5,7 @@ import com.ctre.phoenix.sensors.WPI_PigeonIMU;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -13,13 +14,16 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.ProfiledPIDCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.library.team1706.*;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.Constants.SwerveConstants;
+import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.GlobalConstants;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
@@ -30,7 +34,7 @@ public class SwerveBase extends SubsystemBase {
 
     private static SwerveBase m_Instance = null;
     public static SwerveModuleState[] m_SwerveModuleStates = new SwerveModuleState[4];
-    
+
     /** Creates a new SwerveDriveTrain. */
     private static SwerveModule m_SwerveModules[] = new SwerveModule[4];//底盘的四个模块
   
@@ -63,6 +67,7 @@ public class SwerveBase extends SubsystemBase {
   
     private double GyroRollVelocity = 0;
     private double m_LastGyroRoll = 0;
+    
   
     ShuffleboardTab m_SwerveDriveTab = Shuffleboard.getTab("Swerve");
     boolean m_EnanbleTelemetry = true;
@@ -113,7 +118,7 @@ public class SwerveBase extends SubsystemBase {
   /**
    * 让swerve底盘动起来
    * @param translation 车子的移动方向
-   * @param omega 车子的角速度
+   * @param omega 车子的角速度，单位是radians
    * @param fieldRelative 是否以场地为参考系
    * @param isOpenloop 无意义参数，但是保留
    */
@@ -121,7 +126,7 @@ public class SwerveBase extends SubsystemBase {
       var states = SwerveConstants.swerveKinematics.toSwerveModuleStates(
         fieldRelative ? 
         ChassisSpeeds.fromFieldRelativeSpeeds(
-          translation.getX(), translation.getY(), omega, GetGyroRotation2d())
+          translation.getX(), translation.getY(), omega, m_Odometry.getPoseMeters().getRotation())
         : new ChassisSpeeds(translation.getX() , translation.getY(), omega)
       );
   
@@ -131,7 +136,6 @@ public class SwerveBase extends SubsystemBase {
         m_SwerveModules[i].SetDesiredState(states[i],isOpenloop);
       }
     }
-  
     public void SetModuleStates(SwerveModuleState[] desiredStates){
         SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, SwerveConstants.kMaxSpeed);
         for(int i = 0;i < m_SwerveModules.length;i++){
@@ -384,25 +388,25 @@ public class SwerveBase extends SubsystemBase {
 
     private void AutoCalibrateOdometry()
     {
-      if(RobotContainer.m_Limelight.IsTargetLocked())
+      if(RobotContainer.m_Limelight.IsTargetLocked()==1.0&&m_IsTargetLocked==false)
       {
           m_IsTargetLocked=true;
           m_TargetLockedTime=Timer.getFPGATimestamp();
       }
-      else
+      if(RobotContainer.m_Limelight.IsTargetLocked()==0.0)
       {
           m_IsTargetLocked=false;
       }
       if(m_IsTargetLocked&&Timer.getFPGATimestamp()-m_TargetLockedTime>=Constants.SwerveConstants.AprilTagLockTime)
       {
           RobotContainer.m_SwerveBase.ResetOdometry(RobotContainer.m_Limelight.GetPose2dBotPose());
+          // zeroGyro(RobotContainer.m_Limelight.GetPose2dBotPose().getRotation().getDegrees());
       }
+      SmartDashboard.putNumber("getDegrees",RobotContainer.m_Limelight.GetPose2dBotPose().getRotation().getDegrees());
+      SmartDashboard.putBoolean("IsTargetLocked", m_IsTargetLocked);
+      SmartDashboard.putNumber("m_TargetLockedTime", m_TargetLockedTime);
     }
     
-    public void MoveTo(Pose2d _TargetPose2d)
-    {
-      
-    }
     @Override
     public void periodic() {
       AutoCalibrateOdometry();
@@ -420,7 +424,7 @@ public class SwerveBase extends SubsystemBase {
         GetGyroRotation2d(), 
         GetPositions());
   
-      m_Field.setRobotPose(getPose());
+      m_Field.setRobotPose(new Pose2d(getPose().getX()+FieldConstants.OdometryToFieldOffsetX,getPose().getY()+FieldConstants.OdometryTOFieldOffsety,getPose().getRotation()));
       if(m_EnanbleTelemetry){
         SmartDashboard.putNumber("GetSpeed0", m_SwerveModules[0].GetSpeed());
         SmartDashboard.putNumber("GetSpeed1", m_SwerveModules[1].GetSpeed());

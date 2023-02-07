@@ -4,9 +4,14 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.GenericHID;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.XboxController;
-import frc.robot.commands.SwerveControll;
+import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+import frc.robot.commands.ManualSwerveControll;
+import frc.robot.commands.SemiAutoSwerveControll;
 import frc.robot.subsystems.Limelight;
 import frc.robot.subsystems.SwerveBase;
 
@@ -28,7 +33,7 @@ public class RobotContainer {
   public RobotContainer() {
     // Configure the button bindings
     
-    m_SwerveBase.setDefaultCommand(new SwerveControll());
+    m_SwerveBase.setDefaultCommand(new ManualSwerveControll());
 
     configureButtonBindings();
   }
@@ -39,7 +44,10 @@ public class RobotContainer {
    * edu.wpi.first.wpilibj.Joystick} or {@link XboxController}), and then passing it to a {@link
    * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
    */
-  private void configureButtonBindings() {}
+  private void configureButtonBindings() 
+  {
+    new JoystickButton(m_driverController, 1).onTrue(new SemiAutoSwerveControll(new Pose2d(0,0,new Rotation2d())));
+  }
 
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.

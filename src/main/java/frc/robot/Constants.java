@@ -4,8 +4,13 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
  * constants. This class should not be used for any other purpose. All constants should be declared
@@ -37,6 +42,24 @@ public final class Constants {
                                                           // maximized simultaneously)
         public static final double kTranslationSlew = 1.45;
         public static final double kRotationSlew = 3.00;
+    }
+
+    public static final class FieldConstants{
+        public static final double OdometryToFieldOffsetX= 8.23;
+        public static final double OdometryTOFieldOffsety=4.01;
+    }
+    public static final class SemiAutoConstants{
+        public static final double kSemiAutoVelocityP=0.10 ;//TODO
+        public static final double kSemiAutoVelocityI=0.00;//TODO
+        public static final double kSemiAutoVelocityD=0.05;//TODO
+        public static final Constraints kSemiAutoVelocityConstrants =new Constraints(1,1);//TODO
+        
+        public static final double kSemiAutoOmegaP=3;//TODO
+        public static final double kSemiAutoOmegaI=0.0;//TODO
+        public static final double kSemiAutoOmegaD=0.0;//TODO
+        public static final Constraints kSemiAutoOmegaConstrants =new Constraints(1,100);//TODO
+        public static final double SemiAutoOmegaSlewRate=2;
+        public static final double SemiAutoOmegaMax=2;
     }
     
     public static final class SwerveConstants{
