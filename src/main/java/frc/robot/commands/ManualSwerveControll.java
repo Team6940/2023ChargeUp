@@ -5,6 +5,7 @@ import frc.robot.RobotContainer;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.library.team1706.MathUtils;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Translation2d;
 
@@ -12,6 +13,12 @@ public class ManualSwerveControll extends CommandBase {
   /** Creates a new SwerveControll. */
   //double storedYaw;
   private boolean fieldOrient = true;
+  private boolean IsFocusingGamePiece=false;
+  private PIDController m_GamePieceFocuser;
+  private enum GamePiece{
+    Cone,Cube;
+  }
+  GamePiece TheGamePieceFocused;
   //That means the joystick will reach the max range in 1/3 second
   //The may let the robot move smoothly.
   private final SlewRateLimiter m_slewX = new SlewRateLimiter(DriveConstants.kTranslationSlew);
@@ -35,10 +42,8 @@ public class ManualSwerveControll extends CommandBase {
   public void initialize() {
     //storedYaw = RobotContainer.m_swerve.GetYaw();
   }
-
-  // Called every time the scheduler runs while the command is scheduled.
-  @Override
-  public void execute() {
+  private void FullyManualDrive()
+  {
     double translationX = -inputTransform(RobotContainer.m_driverController.getLeftY());
     double translationY = -inputTransform(RobotContainer.m_driverController.getLeftX());
     double rotationNew = -inputTransform(RobotContainer.m_driverController.getRightX());
@@ -53,6 +58,21 @@ public class ManualSwerveControll extends CommandBase {
         fieldOrient,
         RobotContainer.m_SwerveBase.IsOpenLoop);
 
+  }
+  private void GamePieceFocusDrive()
+  {
+    double translationX = -inputTransform(RobotContainer.m_driverController.getLeftY());
+    double translationY = -inputTransform(RobotContainer.m_driverController.getLeftX());
+    
+    
+  }
+  // Called every time the scheduler runs while the command is scheduled.
+  @Override
+  public void execute() {
+    if(IsFocusingGamePiece)
+      GamePieceFocusDrive();
+    else
+      FullyManualDrive();
     /**
      * The methods below are a try based on 1678's swerve control
      */

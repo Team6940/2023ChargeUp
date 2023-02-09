@@ -42,6 +42,9 @@ public final class Constants {
                                                           // maximized simultaneously)
         public static final double kTranslationSlew = 1.45;
         public static final double kRotationSlew = 3.00;
+        public static final double kGamePieceFocusPIDControllerP=2.8;//TODO
+        public static final double kGamePieceFocusPIDControllerI=0;//TODO
+        public static final double kGamePieceFocusPIDControllerD=0.2;//TODO
     }
 
     public static final class FieldConstants{
