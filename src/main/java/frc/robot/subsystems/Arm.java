@@ -33,8 +33,8 @@ public class Arm extends SubsystemBase{
         m_ArmMotorUp.config_kP(0, ArmConstants.ArmMotorUpkP);
         m_ArmMotorUp.config_kI(0, ArmConstants.ArmMotorUpkI);
         m_ArmMotorUp.config_kD(0, ArmConstants.ArmMotorUpkD);
-        m_ArmMotorUp.configPeakOutputForward(0.5);
-        m_ArmMotorUp.configPeakOutputReverse(-0.5);
+        m_ArmMotorUp.configPeakOutputForward(0.3);
+        m_ArmMotorUp.configPeakOutputReverse(-0.3);
         m_ArmMotorUp.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor);
         
         m_ArmMotorDown=new TalonFX(ArmConstants.ArmMotorDownDeviceNumber);
@@ -109,7 +109,7 @@ public class Arm extends SubsystemBase{
         SmartDashboard.putNumber("MotorPosition", m_ArmMotorUp.getSelectedSensorPosition());
         double _ArmMotorUpOutdput=m_ArmMotorUpPIDCOntroller.calculate(GetNowDegree());
         double _ArmMotorDownOutput=m_ArmMotorDownPIDCOntroller.calculate(GetNowDegree());
-        // m_ArmMotorUp.set(ControlMode.PercentOutput,_ArmMotorUpOutdput);
-        // m_ArmMotorDown.set(ControlMode.PercentOutput,_ArmMotorUpOutdput);
+        m_ArmMotorUp.set(ControlMode.PercentOutput,_ArmMotorUpOutdput);
+        m_ArmMotorDown.set(ControlMode.PercentOutput,_ArmMotorUpOutdput);
     }
 }

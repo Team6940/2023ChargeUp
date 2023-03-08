@@ -1,4 +1,6 @@
 package frc.robot.subsystems;
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.ctre.phoenix.sensors.PigeonIMU;
 import com.ctre.phoenix.sensors.WPI_PigeonIMU;
 
@@ -25,6 +27,7 @@ import frc.robot.RobotContainer;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.GlobalConstants;
+import frc.robot.Constants.LayDownPreventionConstants;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 /**
@@ -37,7 +40,8 @@ public class SwerveBase extends SubsystemBase {
 
     /** Creates a new SwerveDriveTrain. */
     private static SwerveModule m_SwerveModules[] = new SwerveModule[4];//底盘的四个模块
-  
+    private static TalonFX m_AssistWheel;
+    private static TalonFX m_DownPrevention;
     //public PigeonIMU gyro;
     public WPI_PigeonIMU m_Gyro;//陀螺仪
    // public PixyCamSPI mPixy;
@@ -99,7 +103,11 @@ public class SwerveBase extends SubsystemBase {
       m_SwerveModules[1] = new SwerveModule(3, 4, true, false, 3303, true, true);//front right
       m_SwerveModules[2] = new SwerveModule(5, 6, false,  false, 711,  false, false);//back left
       m_SwerveModules[3] = new SwerveModule(7, 8, false, false, 2651,  false, false);//back right
-      
+      m_AssistWheel=new TalonFX(11);
+      m_DownPrevention=new TalonFX(12);
+      m_DownPrevention.config_kP(0, LayDownPreventionConstants.LayDownPreventionkP);
+      m_DownPrevention.config_kI(0, LayDownPreventionConstants.LayDownPreventionkI);
+      m_DownPrevention.config_kD(0, LayDownPreventionConstants.LayDownPreventionkD);
       //ahrs = new AHRS(SPI.Port.kMXP);
   
       //mPixy = PixyCamSPI.getInstance();
@@ -129,12 +137,18 @@ public class SwerveBase extends SubsystemBase {
           translation.getX(), translation.getY(), omega, m_Odometry.getPoseMeters().getRotation())
         : new ChassisSpeeds(translation.getX() , translation.getY(), omega)
       );
-  
+      
       SwerveDriveKinematics.desaturateWheelSpeeds(states, SwerveConstants.kMaxSpeed);
         
       for(int i = 0;i < m_SwerveModules.length;i++ ){
         m_SwerveModules[i].SetDesiredState(states[i],isOpenloop);
       }
+      ChassisSpeeds _AssistWheelSpeeds=fieldRelative ? 
+      ChassisSpeeds.fromFieldRelativeSpeeds(
+        translation.getX(), translation.getY(), omega, m_Odometry.getPoseMeters().getRotation())
+      : new ChassisSpeeds(translation.getX() , translation.getY(), omega);
+      m_AssistWheel.set(ControlMode.PercentOutput, _AssistWheelSpeeds.vxMetersPerSecond);
+      
     }
     public void SetModuleStates(SwerveModuleState[] desiredStates){
         SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, SwerveConstants.kMaxSpeed);
@@ -385,7 +399,13 @@ public class SwerveBase extends SubsystemBase {
     public FieldRelativeAccel getFieldRelativeAccel() {
       return m_FieldRelAccel;
     }
-
+    private void AutoLayDownPrevention()
+    {
+      if(RobotContainer.m_Arm.GetNowDegree()>90)
+        m_DownPrevention.set(ControlMode.MotionMagic,LayDownPreventionConstants.DownUnit);
+      else
+        m_DownPrevention.set(ControlMode.MotionMagic,0);
+    }
     private void AutoCalibrateOdometry()
     {
       if(RobotContainer.m_Limelight.IsTargetLocked()==1.0&&m_IsTargetLocked==false)
@@ -408,6 +428,7 @@ public class SwerveBase extends SubsystemBase {
     }
     @Override
     public void periodic() {
+      AutoLayDownPrevention();
       AutoCalibrateOdometry();
       m_FieldRelVel = new FieldRelativeSpeed(getChassisSpeeds(), GetGyroRotation2d());
       m_FieldRelAccel = new FieldRelativeAccel(m_FieldRelVel, m_LastFieldRelVel, GlobalConstants.kLoopTime);

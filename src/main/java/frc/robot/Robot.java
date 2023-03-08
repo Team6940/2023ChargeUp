@@ -7,6 +7,7 @@ package frc.robot;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Constants.ControllerConstants;
@@ -23,7 +24,8 @@ import frc.robot.commands.ClimbChargeStation.KeepBalance;
  */
 public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
-
+  private int LastPov=-1;
+  private int m_SelectedGrid=1;
   private RobotContainer m_RobotContainer;
 
   /**
@@ -112,24 +114,36 @@ if(RobotContainer.m_driverController.getYButtonPressed())
     
 // }
 
-// if(RobotContainer.m_driverController.povRight(null).rising().getAsBoolean())
-// {
-//     m_SelectedGrid+=1;
-//     m_SelectedGrid=m_SelectedGrid%9;
-// }
-
-// if(RobotContainer.m_driverController.povLeft(null).rising().getAsBoolean())
-// {
-//     m_SelectedGrid-=1;
-//     m_SelectedGrid=(m_SelectedGrid+9)%9;
-// }
+if(RobotContainer.m_driverController.getPOV()==270&&LastPov!=270)
+{
+    m_SelectedGrid-=1;
+    m_SelectedGrid=m_SelectedGrid%9;
+}
+if(RobotContainer.m_driverController.getPOV()==90&&LastPov!=90)
+{
+    m_SelectedGrid+=1;
+    m_SelectedGrid=(m_SelectedGrid+9)%9;
+}
+if(RobotContainer.m_driverController.getLeftBumperPressed())
+{
+  RobotContainer.m_Arm.SwitchSolenoidStatus();
+}
 if(RobotContainer.m_driverController.getRightBumperPressed())
 {
     RobotContainer.m_Claw.Switch();
 }
-RobotContainer.m_Arm.SpinAt((RobotContainer.m_driverController.getRightTriggerAxis()-RobotContainer.m_driverController.getLeftTriggerAxis())*0.5);
+if(RobotContainer.m_driverController.getAButtonPressed())
+{
+  RobotContainer.m_Arm.SpinTo(45);
+}
 
-    
+if(RobotContainer.m_driverController.getBButtonPressed())
+{
+  RobotContainer.m_Arm.SpinTo(12);
+}
+// RobotContainer.m_Arm.SpinAt((RobotContainer.m_driverController.getRightTriggerAxis()-RobotContainer.m_driverController.getLeftTriggerAxis())*0.5);
+LastPov=RobotContainer.m_driverController.getPOV();
+    SmartDashboard.putNumber("SelectedGrid", m_SelectedGrid);
   }
 
   @Override

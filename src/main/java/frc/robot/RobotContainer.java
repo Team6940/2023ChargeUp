@@ -61,8 +61,8 @@ public class RobotContainer {
     // // new JoystickButton(m_driverController, 2).onTrue(new InstantCommand(() -> m_Arm.SpinPositive()));
   
     // // new JoystickButton(m_driverController, 2).onFalse(new InstantCommand(() -> m_Arm.Stop()));
-    new JoystickButton(m_driverController,3).onTrue(new InstantCommand(()->m_Claw.Close()));
-    new JoystickButton(m_driverController,3).onFalse(new InstantCommand(()->m_Claw.Ease()));
+    // new JoystickButton(m_driverController,3).onTrue(new InstantCommand(()->m_Claw.Close()));
+    // new JoystickButton(m_driverController,3).onFalse(new InstantCommand(()->m_Claw.Ease()));
   }
 
   /**
