@@ -9,6 +9,11 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.Constants.ControllerConstants;
+import frc.robot.commands.CenterControl;
+import frc.robot.commands.ManualSwerveControll;
+import frc.robot.commands.SemiAutoSwerveControll;
+import frc.robot.commands.ClimbChargeStation.KeepBalance;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -77,6 +82,7 @@ public class Robot extends TimedRobot {
     RobotContainer.m_SwerveBase.m_Odometry.resetPosition(new Rotation2d(), RobotContainer.m_SwerveBase.GetPositions(), new Pose2d());
     RobotContainer.m_SwerveBase.ZeroHeading();
     RobotContainer.m_SwerveBase.WhetherStoreYaw = false;
+    // CommandScheduler.getInstance().schedule(new CenterControl());
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
@@ -84,7 +90,47 @@ public class Robot extends TimedRobot {
 
   /** This function is called periodically during operator control. */
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
+    if(RobotContainer.m_driverController.getXButtonPressed())
+    ManualSwerveControll.SwitchCarlock();
+if(RobotContainer.m_driverController.getXButtonReleased())
+    ManualSwerveControll.SwitchCarlock();
+if(RobotContainer.m_driverController.getYButtonPressed())
+{
+    new KeepBalance().schedule();
+}
+// if(ControllerConstants.SemiAutoBackButton.getAsBoolean())
+// {
+//     if(!SemiAutoSwerveControll.IsSemiAuto())
+//         SemiAutoSwerveControll.GenerateSemiAutoCommand(RobotContainer.m_SwerveBase.m_Odometry.getPoseMeters(),true,m_SelectedGrid).schedule();
+    
+// }
+// if(ControllerConstants.SemiAutoGoButton.getAsBoolean())
+// {
+//     if(!SemiAutoSwerveControll.IsSemiAuto())
+//         SemiAutoSwerveControll.GenerateSemiAutoCommand(RobotContainer.m_SwerveBase.m_Odometry.getPoseMeters(),false,m_SelectedGrid).schedule();
+    
+// }
+
+// if(RobotContainer.m_driverController.povRight(null).rising().getAsBoolean())
+// {
+//     m_SelectedGrid+=1;
+//     m_SelectedGrid=m_SelectedGrid%9;
+// }
+
+// if(RobotContainer.m_driverController.povLeft(null).rising().getAsBoolean())
+// {
+//     m_SelectedGrid-=1;
+//     m_SelectedGrid=(m_SelectedGrid+9)%9;
+// }
+if(RobotContainer.m_driverController.getRightBumperPressed())
+{
+    RobotContainer.m_Claw.Switch();
+}
+RobotContainer.m_Arm.SpinAt((RobotContainer.m_driverController.getRightTriggerAxis()-RobotContainer.m_driverController.getLeftTriggerAxis())*0.5);
+
+    
+  }
 
   @Override
   public void testInit() {

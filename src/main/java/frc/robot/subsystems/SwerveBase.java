@@ -117,7 +117,7 @@ public class SwerveBase extends SubsystemBase {
     }
   /**
    * 让swerve底盘动起来
-   * @param translation 车子的移动方向
+   * @param translation 车子的移动方向，x轴为前后，y轴为左右
    * @param omega 车子的角速度，单位是radians
    * @param fieldRelative 是否以场地为参考系
    * @param isOpenloop 无意义参数，但是保留
@@ -406,7 +406,6 @@ public class SwerveBase extends SubsystemBase {
       SmartDashboard.putBoolean("IsTargetLocked", m_IsTargetLocked);
       SmartDashboard.putNumber("m_TargetLockedTime", m_TargetLockedTime);
     }
-    
     @Override
     public void periodic() {
       AutoCalibrateOdometry();

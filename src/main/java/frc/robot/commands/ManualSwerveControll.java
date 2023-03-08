@@ -13,12 +13,7 @@ public class ManualSwerveControll extends CommandBase {
   /** Creates a new SwerveControll. */
   //double storedYaw;
   private boolean fieldOrient = true;
-  private boolean IsFocusingGamePiece=false;
-  private PIDController m_GamePieceFocuser;
-  private enum GamePiece{
-    Cone,Cube;
-  }
-  GamePiece TheGamePieceFocused;
+  private static boolean IsCarLock=false;
   //That means the joystick will reach the max range in 1/3 second
   //The may let the robot move smoothly.
   private final SlewRateLimiter m_slewX = new SlewRateLimiter(DriveConstants.kTranslationSlew);
@@ -59,18 +54,19 @@ public class ManualSwerveControll extends CommandBase {
         RobotContainer.m_SwerveBase.IsOpenLoop);
 
   }
-  private void GamePieceFocusDrive()
+  public static void SwitchCarlock()
   {
-    double translationX = -inputTransform(RobotContainer.m_driverController.getLeftY());
-    double translationY = -inputTransform(RobotContainer.m_driverController.getLeftX());
-    
-    
+   IsCarLock= !IsCarLock;
+  }
+  private void CarLock()
+  {
+    RobotContainer.m_SwerveBase.setHOLD_MODULE_STATES();
   }
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    if(IsFocusingGamePiece)
-      GamePieceFocusDrive();
+    if(IsCarLock)
+      CarLock();
     else
       FullyManualDrive();
     /**
