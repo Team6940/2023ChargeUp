@@ -20,6 +20,7 @@ import frc.robot.subsystems.SwerveBase;
 import io.github.pseudoresonance.pixy2api.Pixy2;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Claw;
+import frc.robot.subsystems.DownPrevention;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -34,9 +35,11 @@ public class RobotContainer {
   public static SwerveBase m_SwerveBase=SwerveBase.getInstance();
   public static Limelight m_Limelight=Limelight.getInstance();
   public static XboxController m_driverController = new XboxController(0);
+  public static XboxController m_testController = new XboxController(1);
   public static Arm m_Arm=Arm.GetInstance();
   public static Pixy m_Pixy2=Pixy.getInstance();
   public static Claw m_Claw=Claw.GetInstance();
+  public static DownPrevention m_DownPrevention=DownPrevention.GetInstance();
   // The robot's subsystems and commands are defined here...
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {

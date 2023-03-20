@@ -4,16 +4,18 @@
 
 package frc.robot;
 
-import org.opencv.core.Rect2d;
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+import frc.robot.commands.SemiAutoSwerveControll;
+
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
  * constants. This class should not be used for any other purpose. All constants should be declared
@@ -43,7 +45,7 @@ public final class Constants {
         public static final double kOuterDeadband = 0.98; // This value should be lower than the analog stick X or Y reading
                                                           // when aimed at a 45deg angle (Such that X and Y are are
                                                           // maximized simultaneously)
-        public static final double kTranslationSlew = 1.45;
+        public static final double kTranslationSlew = 4;
         public static final double kRotationSlew = 3.00;
         public static final double kGamePieceFocusPIDControllerP=2.8;//TODO
         public static final double kGamePieceFocusPIDControllerI=0;//TODO
@@ -55,12 +57,12 @@ public final class Constants {
         public static final double OdometryTOFieldOffsety=4.01;
     }
     public static final class SemiAutoConstants{
-        public static final double kSemiAutoVelocityP=0.10 ;//TODO
+        public static final double kSemiAutoVelocityP=2 ;//TODO
         public static final double kSemiAutoVelocityI=0.00;//TODO
-        public static final double kSemiAutoVelocityD=0.05;//TODO
-        public static final Constraints kSemiAutoVelocityConstrants =new Constraints(1,1);//TODO
+        public static final double kSemiAutoVelocityD=0.0;//TODO
+        public static final Constraints kSemiAutoVelocityConstrants =new Constraints(2,1);//TODO
         public static final double SemiAutoVelocityMax=2;
-        public static final double kSemiAutoOmegaP=3;//TODO
+        public static final double kSemiAutoOmegaP=3.5;//TODO
         public static final double kSemiAutoOmegaI=0.0;//TODO
         public static final double kSemiAutoOmegaD=0.0;//TODO
         public static final Constraints kSemiAutoOmegaConstrants =new Constraints(1,100);//TODO
@@ -68,32 +70,39 @@ public final class Constants {
         public static final double SemiAutoOmegaMax=2;
     }
     public static final class ClawConstants{
-        public static final int m_ClawSolenoidPort=3;
+        public static final int m_ClawSolenoidPort=2;
     }
     public static final class ArmConstants{//TODO
         public static final int ArmMotorUpDeviceNumber=9;
         public static final int ArmMotorDownDeviceNumber=10;
-        public static final double ArmMotorUpkP=0.04;
-        public static final double ArmMotorUpkI=0.01;
-        public static final double ArmMotorUpkD=0.0005;
-        public static final double ArmMotorDownkP=0.5;
-        public static final double ArmMotorDownkI=0;
-        public static final double ArmMotorDownkD=0.;
+        public static final double ArmInDegreeToVerticalOffset=-15;
+        public static final double ArmOutDegreeToVerticalOffset=-15;
+        public static final double ArmMotorInkP=0.0025;
+        public static final double ArmMotorInkI=0.00055;
+        public static final double ArmMotorInkD=0.0008;
+        public static final double ArmMotorOutkP=0.0055;
+        public static final double ArmMotorOutkI=0.00;
+        public static final double ArmMotorOutkD=0.0008;
         public static final double kArmMotorReductionRatio=(1./10.)*(32./72.)*360./2048.;
         public static final double kArmMotorUpOffeset=0;
         public static final double kArmMotorDownOffeset=0;
 
-        public static final double ArmFeedForwardkS=0;
-        public static final double ArmFeedForwardkV=0;
-        public static final double ArmFeedForwardkA=0;
-        public static final double ArmFeedForwardkG=0;
-        public static final int ArmSolenoidPort=2;
+        public static final double ArmInSlewRateLimit=4;
+        public static final double ArmOutSlewRateLimit=4;
+        public static final double ArmInFeedForwardkS=0;
+        public static final double ArmInFeedForwardkV=0.7;
+        public static final double ArmInFeedForwardkA=0;
+        public static final double ArmInFeedForwardkG=-0.08;
+        
+
+        public static final double ArmOutFeedForwardkS=0;
+        public static final double ArmOutFeedForwardkV=0.7;
+        public static final double ArmOutFeedForwardkA=0;
+        public static final double ArmOutFeedForwardkG=0.1;
+        public static final int ArmSolenoidPort=1;
     }   
     public static final class LayDownPreventionConstants{
-        public static int DownUnit; 
-        public static double LayDownPreventionkP=3.0; 
-        public static double LayDownPreventionkI=0.0; 
-        public static double LayDownPreventionkD=0.3;
+        public static final int DownPreventionPort=3;    
     }
     public static final class ClimbConstants{
         public static double ClimbPIDControllerkP=0.6;
@@ -110,47 +119,126 @@ public final class Constants {
                                         {3,2.70,13.6,0},
                                         {0,8,3.34,5.74},
                                         {13.20,8,16.24,5.38}};
-        public static Pose2d SemiAutoBackPoseRed[]={new Pose2d(12.44,4.60, new Rotation2d(180)),
-                                                    new Pose2d(14.36,4.72,new Rotation2d(180)),
-                                                    new Pose2d(10.82,4.84,new Rotation2d(180)),
-                                                    new Pose2d(10.82,0.18,new Rotation2d(180)),
-                                                    new Pose2d(14.25,0.67,new Rotation2d(180)),
-                                                    new Pose2d(4.31,6.90,new Rotation2d(180)),
-                                                    new Pose2d(12.07,6.90,new Rotation2d(180)),};
-        public static Pose2d SemiAutoBackPoseBlue[]={new Pose2d(4.09,4.78, new Rotation2d(0)),
-                                                     new Pose2d(2.22,4.61,new Rotation2d(0)),
-                                                    new Pose2d(5.59,4.78,new Rotation2d(0)),
-                                                new Pose2d(5.51,0.18,new Rotation2d(0)),
-                                                new Pose2d(2.10,0.67,new Rotation2d(0)),
-                                                new Pose2d(12.07,6.90,new Rotation2d(0)),
-                                                new Pose2d(4.31,6.90,new Rotation2d(180)),
-                                                new Pose2d(12.07,6.90,new Rotation2d(180)),};
-        public static Pose2d SemiAutoGoPoseRed[]={new Pose2d(3.95-FieldConstants.OdometryToFieldOffsetX,4.70-FieldConstants.OdometryTOFieldOffsety, new Rotation2d(0))};
-        public static Pose2d SemiAutoGoPoseBlue[]={new Pose2d(3.95-FieldConstants.OdometryToFieldOffsetX,4.70-FieldConstants.OdometryTOFieldOffsety, new Rotation2d(0))};
+        public static Pose2d SemiAutoBackPoseRed[]={new Pose2d(12.44-8.23,4.60-4.01, new Rotation2d(Math.PI)),
+                                                    new Pose2d(14.36-8.23,4.72-4.01,new Rotation2d(Math.PI)),
+                                                    new Pose2d(10.82-8.23,4.84-4.01,new Rotation2d(Math.PI)),
+                                                    new Pose2d(10.82-8.23,0.18-4.01,new Rotation2d(Math.PI)),
+                                                    new Pose2d(14.25-8.23,0.67-4.01,new Rotation2d(Math.PI)),
+                                                    new Pose2d(4.31-8.23,6.90-4.01,new Rotation2d(Math.PI)),
+                                                    new Pose2d(12.07-8.23,6.90-4.01,new Rotation2d(Math.PI)),};
+        public static Pose2d SemiAutoBackPoseBlue[]={new Pose2d(4.09-8.23,4.78-4.01, new Rotation2d(0)),
+                                                     new Pose2d(2.22-8.23,4.61-4.01,new Rotation2d(0)),
+                                                    new Pose2d(5.59-8.23,4.78-4.01,new Rotation2d(0)),
+                                                new Pose2d(5.51-8.23,0.18-4.01,new Rotation2d(0)),
+                                                new Pose2d(2.10-8.23,0.67-4.01,new Rotation2d(0)),
+                                                new Pose2d(12.07-8.23,6.90-4.01,new Rotation2d(0)),
+                                                new Pose2d(4.31-8.23,6.90-4.01,new Rotation2d(0)),
+                                                new Pose2d(12.07-8.23,6.90-4.01,new Rotation2d(0)),};
+        public static Pose2d SemiAutoGoPoseRed[]={new Pose2d(0.60-FieldConstants.OdometryToFieldOffsetX,6.12-FieldConstants.OdometryTOFieldOffsety, new Rotation2d(Math.PI))};
+        public static Pose2d SemiAutoGoPoseBlue[]={new Pose2d(15.69-FieldConstants.OdometryToFieldOffsetX,6.12-FieldConstants.OdometryTOFieldOffsety, new Rotation2d(0))};
         
         
-        public static Pose2d SemiAutoPutPoseRed[]={new Pose2d(14.82,4.97,new Rotation2d(180)),
-                                                    new Pose2d(14.82,4.36,new Rotation2d(180)),
-                                                    new Pose2d(14.82,3.88,new Rotation2d(180)),
-                                                    new Pose2d(14.82,3.29,new Rotation2d(180)),
-                                                    new Pose2d(14.82,2.73,new Rotation2d(180)),
-                                                    new Pose2d(14.82,2.20,new Rotation2d(180)),
-                                                    new Pose2d(14.82,1.61,new Rotation2d(180)),
-                                                    new Pose2d(14.82,1.02,new Rotation2d(180)),
-                                                    new Pose2d(14.82,0.46,new Rotation2d(180))};
+        public static Pose2d SemiAutoPutPoseRed[]={new Pose2d(14.72-8.23,5.17-4.01,new Rotation2d(Math.PI)),
+                                                    new Pose2d(14.72-8.23,4.36-4.01,new Rotation2d(Math.PI)),
+                                                    new Pose2d(14.72-8.23,3.88-4.01,new Rotation2d(Math.PI)),
+                                                    new Pose2d(14.72-8.23,3.29-4.01,new Rotation2d(Math.PI)),
+                                                    new Pose2d(14.72-8.23,2.73-4.01,new Rotation2d(Math.PI)),
+                                                    new Pose2d(14.72-8.23,2.20-4.01,new Rotation2d(Math.PI)),
+                                                    new Pose2d(14.72-8.23,1.61-4.01,new Rotation2d(Math.PI)),
+                                                    new Pose2d(14.72-8.23,1.02-4.01,new Rotation2d(Math.PI)),
+                                                    new Pose2d(14.72-8.23,0.46-4.01,new Rotation2d(Math.PI))};
 
-        public static Pose2d SemiAutoPutPoseBlue[]={new Pose2d(1.72,4.97,new Rotation2d(0)),
-                                                    new Pose2d(1.72,4.36,new Rotation2d(0)),
-                                                    new Pose2d(1.72,3.88,new Rotation2d(0)),
-                                                    new Pose2d(1.72,3.29,new Rotation2d(0)),
-                                                    new Pose2d(1.72,2.73,new Rotation2d(0)),
-                                                    new Pose2d(1.72,2.20,new Rotation2d(0)),
-                                                    new Pose2d(1.72,1.61,new Rotation2d(0)),
-                                                    new Pose2d(1.72,1.02,new Rotation2d(0)),
-                                                    new Pose2d(1.72,0.46,new Rotation2d(0)),};
+        public static Pose2d SemiAutoPutPoseBlue[]={new Pose2d(1.72-8.23,5.17-4.01,new Rotation2d(0)),
+                                                    new Pose2d(1.72-8.23,4.36-4.01,new Rotation2d(0)),
+                                                    new Pose2d(1.72-8.23,3.88-4.01,new Rotation2d(0)),
+                                                    new Pose2d(1.72-8.23,3.29-4.01,new Rotation2d(0)),
+                                                    new Pose2d(1.72-8.23,2.73-4.01,new Rotation2d(0)),
+                                                    new Pose2d(1.72-8.23,2.20-4.01,new Rotation2d(0)),
+                                                    new Pose2d(1.72-8.23,1.61-4.01,new Rotation2d(0)),
+                                                    new Pose2d(1.72-8.23,1.02-4.01,new Rotation2d(0)),
+                                                    new Pose2d(1.72-8.23,0.46-4.01,new Rotation2d(0)),};
         
                                                 }
+    public static final class AutoConstants{
+        
+        public static final Command AutoRedCommand[]={
+            
+              new SequentialCommandGroup(new SemiAutoSwerveControll(new Pose2d(14.72-FieldConstants.OdometryToFieldOffsetX, 4.36-FieldConstants.OdometryTOFieldOffsety, new Rotation2d(Math.PI)), 1).raceWith(new WaitCommand(2)),
+                                        new InstantCommand(()-> 
+                                        RobotContainer.m_Arm.SetState(125, true)),
+                                        new WaitCommand(1),
+                                        new InstantCommand(()->RobotContainer.m_Claw.Ease()),
+                                        new WaitCommand(1),
+                                        new InstantCommand(()->RobotContainer.m_Arm.SetState(12, false)))
+                                        ,
+                new SequentialCommandGroup(new SemiAutoSwerveControll(new Pose2d(14.72-FieldConstants.OdometryToFieldOffsetX, 4.36-FieldConstants.OdometryTOFieldOffsety, new Rotation2d(Math.PI)), 1).raceWith(new WaitCommand(2)),
+                                           new InstantCommand(()-> 
+                                           RobotContainer.m_Arm.SetState(125, true)),
+                                           new WaitCommand(1),
+                                           new InstantCommand(()->RobotContainer.m_Claw.Ease()),
+                                           new WaitCommand(0.5),
+                                           new InstantCommand(()->RobotContainer.m_Arm.SetState(12, false)),
+                                           new SemiAutoSwerveControll(new Pose2d(10-FieldConstants.OdometryToFieldOffsetX,0.924-FieldConstants.OdometryTOFieldOffsety,new Rotation2d(Math.PI)),1).raceWith(new WaitCommand(3)),
+                                           new InstantCommand(()->RobotContainer.m_Arm.SetState(-40, true)),
+                                           new WaitCommand(1),
+                                           new InstantCommand(()->RobotContainer.m_Claw.Close()),
+                                           new WaitCommand(0.5),
+                                           new SemiAutoSwerveControll(new Pose2d(14.72-FieldConstants.OdometryToFieldOffsetX,0.99-FieldConstants.OdometryTOFieldOffsety,new Rotation2d(Math.PI)),1).raceWith(new WaitCommand(3)),
+                                           new InstantCommand(()-> 
+                                            RobotContainer.m_Arm.SetState(125, true)),
+                                            new WaitCommand(1),
+                                            new InstantCommand(()->RobotContainer.m_Claw.Ease()),
+                                            new WaitCommand(1),
+                                            new InstantCommand(()->RobotContainer.m_Arm.SetState(12, false)),
+                                            new WaitCommand(1),
+                                            new SemiAutoSwerveControll(new Pose2d(10-FieldConstants.OdometryToFieldOffsetX,0.924-FieldConstants.OdometryTOFieldOffsety,new Rotation2d(Math.PI)),1).raceWith(new WaitCommand(3))
+                                           
+                                            
+                                        
+                                           
+                                           )
+           
+             
+            
+        };
+        public static final Command AutoBlueCommand[]=
+        {
+            new SequentialCommandGroup(new SemiAutoSwerveControll(new Pose2d(1.73-FieldConstants.OdometryToFieldOffsetX, 4.98-FieldConstants.OdometryTOFieldOffsety, new Rotation2d(0)), 1),
+            new InstantCommand(()-> 
+            RobotContainer.m_Arm.SetState(140, true)),
+            new WaitCommand(1),
+            new InstantCommand(()->RobotContainer.m_Claw.Ease()),
+            new WaitCommand(0.3),
+            new InstantCommand(()->RobotContainer.m_Arm.SetState(12, false))), 
+            
+            new SequentialCommandGroup(new SemiAutoSwerveControll(new Pose2d(1.73-FieldConstants.OdometryToFieldOffsetX, 4.36-FieldConstants.OdometryTOFieldOffsety, new Rotation2d(Math.PI)), 1).raceWith(new WaitCommand(2)),
+            new InstantCommand(()-> 
+            RobotContainer.m_Arm.SetState(125, true)),
+            new WaitCommand(1),
+            new InstantCommand(()->RobotContainer.m_Claw.Ease()),
+            new WaitCommand(0.5),
+            new InstantCommand(()->RobotContainer.m_Arm.SetState(12, false)),
+            new SemiAutoSwerveControll(new Pose2d(6.43-FieldConstants.OdometryToFieldOffsetX,0.924-FieldConstants.OdometryTOFieldOffsety,new Rotation2d(Math.PI)),1).raceWith(new WaitCommand(3)),
+            new InstantCommand(()->RobotContainer.m_Arm.SetState(-40, true)),
+            new WaitCommand(1),
+            new InstantCommand(()->RobotContainer.m_Claw.Close()),
+            new WaitCommand(0.5),
+            new SemiAutoSwerveControll(new Pose2d(14.72-FieldConstants.OdometryToFieldOffsetX,0.99-FieldConstants.OdometryTOFieldOffsety,new Rotation2d(Math.PI)),1).raceWith(new WaitCommand(3)),
+            new InstantCommand(()-> 
+             RobotContainer.m_Arm.SetState(125, true)),
+             new WaitCommand(1),
+             new InstantCommand(()->RobotContainer.m_Claw.Ease()),
+             new WaitCommand(1),
+             new InstantCommand(()->RobotContainer.m_Arm.SetState(12, false)),
+             new WaitCommand(1),
+             new SemiAutoSwerveControll(new Pose2d(10-FieldConstants.OdometryToFieldOffsetX,0.924-FieldConstants.OdometryTOFieldOffsety,new Rotation2d(Math.PI)),1).raceWith(new WaitCommand(3)))
+
+            
+
+        };
+    }
     public static final class SwerveConstants{
+
         public static final boolean invertGyro = false; // Always ensure Gyro is CCW+ CW-
 
         public static final double openLoopRamp = 0.25;
@@ -216,7 +304,7 @@ public final class Constants {
     
         public static double kWheelDiameter = 0.093;//轮子直径 单位是米
     
-        public static double kMaxSpeed = 4;//The unit is meters per second 轮子的最大转速，单位是m/s
+        public static double kMaxSpeed = 8;//The unit is meters per second 轮子的最大转速，单位是m/s
     
         public static final SwerveDriveKinematics swerveKinematics = new SwerveDriveKinematics(//创建一个坐标系，上面的每一个点就是底盘上的一个drivemodule
             new edu.wpi.first.math.geometry.Translation2d(kLength / 2.0, kWidth / 2.0),

@@ -1,5 +1,8 @@
 package frc.robot.subsystems;
 
+import java.time.OffsetDateTime;
+import java.util.concurrent.Delayed;
+
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.TalonFXControlMode;
@@ -12,40 +15,49 @@ import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.RobotContainer;
 import frc.robot.Constants.ArmConstants;
 import frc.robot.Constants.ClawConstants;
 
 public class Arm extends SubsystemBase{
     public static Arm instance=null;
+    public static boolean m_ArmEnabled=false;
     private TalonFX m_ArmMotorUp;
     private TalonFX m_ArmMotorDown;
     private double NowDegree=0;
-    private ArmFeedforward m_ArmFeedforward=new ArmFeedforward(ArmConstants.ArmFeedForwardkS,ArmConstants.ArmFeedForwardkG,ArmConstants.ArmFeedForwardkV,ArmConstants.ArmFeedForwardkA);
-    private PIDController m_ArmMotorUpPIDCOntroller=new PIDController(ArmConstants.ArmMotorUpkP,ArmConstants.ArmMotorUpkI,ArmConstants.ArmMotorUpkD);
-    private PIDController m_ArmMotorDownPIDCOntroller=new PIDController(ArmConstants.ArmMotorDownkP,ArmConstants.ArmMotorDownkI,ArmConstants.ArmMotorDownkD);
+    private double TargetAngle=0;
+    private ArmFeedforward m_ArmInFeedforward=new ArmFeedforward(ArmConstants.ArmInFeedForwardkS,ArmConstants.ArmInFeedForwardkG,ArmConstants.ArmInFeedForwardkV,ArmConstants.ArmInFeedForwardkA);
+    private ArmFeedforward m_ArmOutFeedforward=new ArmFeedforward(ArmConstants.ArmOutFeedForwardkS,ArmConstants.ArmOutFeedForwardkG,ArmConstants.ArmOutFeedForwardkV,ArmConstants.ArmInFeedForwardkA);
+    private PIDController m_ArmMotorInPIDCOntroller=new PIDController(ArmConstants.ArmMotorInkP,ArmConstants.ArmMotorInkI,ArmConstants.ArmMotorInkD);
+    private PIDController m_ArmMotorOutPIDCOntroller=new PIDController(ArmConstants.ArmMotorOutkP,ArmConstants.ArmMotorOutkI,ArmConstants.ArmMotorOutkD);
+    private SlewRateLimiter m_ArmInSlewRateLimiter=new SlewRateLimiter(4);
+    private SlewRateLimiter m_ArmOutSlewRateLimiter=new SlewRateLimiter(4);
     private  Solenoid m_ArmSolenoid;
     private  boolean m_ArmSolenoidStatus=false;
+    public double offset=0;
     public Arm()
     {
         m_ArmMotorUp=new TalonFX(ArmConstants.ArmMotorUpDeviceNumber);
         m_ArmMotorUp.setInverted(true);
        m_ArmSolenoid =new Solenoid(PneumaticsModuleType.CTREPCM,ArmConstants.ArmSolenoidPort);
-        m_ArmMotorUp.config_kP(0, ArmConstants.ArmMotorUpkP);
-        m_ArmMotorUp.config_kI(0, ArmConstants.ArmMotorUpkI);
-        m_ArmMotorUp.config_kD(0, ArmConstants.ArmMotorUpkD);
-        m_ArmMotorUp.configPeakOutputForward(0.3);
-        m_ArmMotorUp.configPeakOutputReverse(-0.3);
+        m_ArmMotorUp.config_kP(0, ArmConstants.ArmMotorInkP);
+        m_ArmMotorUp.config_kI(0, ArmConstants.ArmMotorInkI);
+        m_ArmMotorUp.config_kD(0, ArmConstants.ArmMotorInkD);
+        m_ArmMotorUp.configPeakOutputForward(0.27);
+        m_ArmMotorUp.configPeakOutputReverse(-0.27);
         m_ArmMotorUp.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor);
         
         m_ArmMotorDown=new TalonFX(ArmConstants.ArmMotorDownDeviceNumber);
         
         m_ArmMotorDown.setInverted(true);
-        m_ArmMotorDown.config_kP(0, ArmConstants.ArmMotorDownkP);
-        m_ArmMotorDown.config_kI(0, ArmConstants.ArmMotorDownkI);
-        m_ArmMotorDown.config_kD(0, ArmConstants.ArmMotorDownkD);
-        m_ArmMotorDown.configPeakOutputForward(0.3);
-        m_ArmMotorDown.configPeakOutputReverse(-0.3);
+        m_ArmMotorDown.config_kP(0, ArmConstants.ArmMotorOutkP);
+        m_ArmMotorDown.config_kI(0, ArmConstants.ArmMotorOutkI);
+        m_ArmMotorDown.config_kD(0, ArmConstants.ArmMotorOutkD);
+        m_ArmMotorDown.configPeakOutputForward(0.27);
+        m_ArmMotorDown.configPeakOutputReverse(-0.27);
         m_ArmMotorDown.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor);
+        SpinTo(12);
+        // SwitchSolenoidStatus();
         // m_ArmPIDController.setSetpoint(0);   
         // m_SlewRateLimiter.calculate(0);
     }
@@ -68,6 +80,10 @@ public class Arm extends SubsystemBase{
     public double GetNowDegree()
     {
         double _NowDegree=(m_ArmMotorUp.getSelectedSensorPosition()-ArmConstants.kArmMotorUpOffeset)*ArmConstants.kArmMotorReductionRatio;
+        if(m_ArmSolenoidStatus==false)
+            _NowDegree+=ArmConstants.ArmInDegreeToVerticalOffset;
+        else
+            _NowDegree+=ArmConstants.ArmOutDegreeToVerticalOffset;
         return _NowDegree;
     }
     /**
@@ -82,8 +98,18 @@ public class Arm extends SubsystemBase{
     public void SpinTo(double _Degree)
     {
         NowDegree=_Degree;
-        m_ArmMotorUpPIDCOntroller.setSetpoint(_Degree);
-        m_ArmMotorDownPIDCOntroller.setSetpoint(_Degree);
+        m_ArmMotorInPIDCOntroller.setSetpoint(_Degree);
+        m_ArmMotorOutPIDCOntroller.setSetpoint(_Degree);
+        TargetAngle=_Degree;
+        m_ArmMotorInPIDCOntroller.reset();
+        m_ArmMotorOutPIDCOntroller.reset();
+    }
+    public void SetState(double _Degree,boolean ArmState)
+    {
+        if(ArmState!=m_ArmSolenoidStatus)
+            SwitchSolenoidStatus();
+        SpinTo(_Degree);
+        
     }
     public void SpinPositive()
     {
@@ -93,8 +119,8 @@ public class Arm extends SubsystemBase{
     public void Stop()
     {
         
-        m_ArmMotorUpPIDCOntroller.setSetpoint(GetNowDegree());
-        m_ArmMotorDownPIDCOntroller.setSetpoint(GetNowDegree());
+        m_ArmMotorInPIDCOntroller.setSetpoint(GetNowDegree());
+        m_ArmMotorOutPIDCOntroller.setSetpoint(GetNowDegree());
     }
     public void SpinNegetive()
     {
@@ -104,12 +130,30 @@ public class Arm extends SubsystemBase{
     @Override
     public void periodic() {
         // TODO Auto-generated method stub
-        NowDegree=m_ArmMotorUp.getSelectedSensorPosition()*ArmConstants.kArmMotorReductionRatio;
+        NowDegree=GetNowDegree();
         SmartDashboard.putNumber("ArmDegree", NowDegree);
         SmartDashboard.putNumber("MotorPosition", m_ArmMotorUp.getSelectedSensorPosition());
-        double _ArmMotorUpOutdput=m_ArmMotorUpPIDCOntroller.calculate(GetNowDegree());
-        double _ArmMotorDownOutput=m_ArmMotorDownPIDCOntroller.calculate(GetNowDegree());
-        m_ArmMotorUp.set(ControlMode.PercentOutput,_ArmMotorUpOutdput);
-        m_ArmMotorDown.set(ControlMode.PercentOutput,_ArmMotorUpOutdput);
-    }
+        SmartDashboard.putBoolean("Status",m_ArmSolenoidStatus);
+        if(m_ArmEnabled)
+        {
+            double _ArmMotorOutput=0;
+        if(m_ArmSolenoidStatus==false)
+        {
+           _ArmMotorOutput=m_ArmInFeedforward.calculate(TargetAngle/180*Math.PI, 0)+m_ArmMotorInPIDCOntroller.calculate(NowDegree);
+            _ArmMotorOutput=m_ArmInSlewRateLimiter.calculate(_ArmMotorOutput);
+            m_ArmOutSlewRateLimiter.calculate(_ArmMotorOutput);
+        }
+        else
+        {
+           _ArmMotorOutput=m_ArmOutFeedforward.calculate(TargetAngle/180*Math.PI, 0)+m_ArmMotorOutPIDCOntroller.calculate(NowDegree);
+            _ArmMotorOutput=m_ArmOutSlewRateLimiter.calculate(_ArmMotorOutput);
+            m_ArmInSlewRateLimiter.calculate(_ArmMotorOutput);
+        }
+        _ArmMotorOutput+=offset;
+        double _ArmMotorDownOutput=m_ArmMotorOutPIDCOntroller.calculate(GetNowDegree());
+        m_ArmMotorUp.set(ControlMode.PercentOutput,_ArmMotorOutput);
+        m_ArmMotorDown.set(ControlMode.PercentOutput,_ArmMotorOutput);
+
+        }
+        }
 }

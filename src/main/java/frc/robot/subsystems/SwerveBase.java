@@ -1,13 +1,10 @@
 package frc.robot.subsystems;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
-import com.ctre.phoenix.sensors.PigeonIMU;
 import com.ctre.phoenix.sensors.WPI_PigeonIMU;
 
-import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -16,10 +13,8 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.ProfiledPIDCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.library.team1706.*;
 import frc.robot.Constants;
@@ -27,7 +22,6 @@ import frc.robot.RobotContainer;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.GlobalConstants;
-import frc.robot.Constants.LayDownPreventionConstants;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 /**
@@ -55,8 +49,11 @@ public class SwerveBase extends SubsystemBase {
     double HEAD_P = 0.01;
     double HEAD_I = 0;
     double HEAD_D = 0;
+    // double m_LayDownPreventionTargetAngle=90;
     PIDController HeadController = new PIDController(HEAD_P, HEAD_I, HEAD_D);
-  
+    // PIDController m_DownPreventController=new PIDController(LayDownPreventionConstants.LayDownPreventionkP,LayDownPreventionConstants.LayDownPreventionkI, LayDownPreventionConstants.LayDownPreventionkD);
+    // ArmFeedforward m_DownPreventFeedforward=new ArmFeedforward(0, LayDownPreventionConstants.LayDownPreventionFeedbackkG, LayDownPreventionConstants.LayDownPreventionFeedbackkV);
+    // boolean m_DownPreventStatus=false;//false为放下
     public boolean IsOpenLoop = true;
   
     public boolean WhetherStoreYaw = false;
@@ -104,10 +101,12 @@ public class SwerveBase extends SubsystemBase {
       m_SwerveModules[2] = new SwerveModule(5, 6, false,  false, 711,  false, false);//back left
       m_SwerveModules[3] = new SwerveModule(7, 8, false, false, 2651,  false, false);//back right
       m_AssistWheel=new TalonFX(11);
-      m_DownPrevention=new TalonFX(12);
-      m_DownPrevention.config_kP(0, LayDownPreventionConstants.LayDownPreventionkP);
-      m_DownPrevention.config_kI(0, LayDownPreventionConstants.LayDownPreventionkI);
-      m_DownPrevention.config_kD(0, LayDownPreventionConstants.LayDownPreventionkD);
+      // m_DownPrevention=new TalonFX(12);
+      // m_DownPrevention.config_kP(0, LayDownPreventionConstants.LayDownPreventionkP);
+      // m_DownPrevention.config_kI(0, LayDownPreventionConstants.LayDownPreventionkI);
+      // m_DownPrevention.config_kD(0, LayDownPreventionConstants.LayDownPreventionkD);
+      // m_DownPrevention.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor);
+      // // m_DownPrevention.configAllowableClosedloopError(0,0);
       //ahrs = new AHRS(SPI.Port.kMXP);
   
       //mPixy = PixyCamSPI.getInstance();
@@ -147,7 +146,7 @@ public class SwerveBase extends SubsystemBase {
       ChassisSpeeds.fromFieldRelativeSpeeds(
         translation.getX(), translation.getY(), omega, m_Odometry.getPoseMeters().getRotation())
       : new ChassisSpeeds(translation.getX() , translation.getY(), omega);
-      m_AssistWheel.set(ControlMode.PercentOutput, _AssistWheelSpeeds.vxMetersPerSecond);
+      m_AssistWheel.set(ControlMode.PercentOutput, _AssistWheelSpeeds.vxMetersPerSecond*0.25);
       
     }
     public void SetModuleStates(SwerveModuleState[] desiredStates){
@@ -399,13 +398,11 @@ public class SwerveBase extends SubsystemBase {
     public FieldRelativeAccel getFieldRelativeAccel() {
       return m_FieldRelAccel;
     }
-    private void AutoLayDownPrevention()
+    public void LayDownPreventSpinAt(double pct)
     {
-      if(RobotContainer.m_Arm.GetNowDegree()>90)
-        m_DownPrevention.set(ControlMode.MotionMagic,LayDownPreventionConstants.DownUnit);
-      else
-        m_DownPrevention.set(ControlMode.MotionMagic,0);
+      m_DownPrevention.set(ControlMode.PercentOutput,pct);
     }
+   
     private void AutoCalibrateOdometry()
     {
       if(RobotContainer.m_Limelight.IsTargetLocked()==1.0&&m_IsTargetLocked==false)
@@ -417,19 +414,19 @@ public class SwerveBase extends SubsystemBase {
       {
           m_IsTargetLocked=false;
       }
-      if(m_IsTargetLocked&&Timer.getFPGATimestamp()-m_TargetLockedTime>=Constants.SwerveConstants.AprilTagLockTime)
+      if(m_IsTargetLocked&&Timer.getFPGATimestamp()-m_TargetLockedTime>=Constants.SwerveConstants.AprilTagLockTime&RobotContainer.m_driverController.getBButton())
       {
           RobotContainer.m_SwerveBase.ResetOdometry(RobotContainer.m_Limelight.GetPose2dBotPose());
           // zeroGyro(RobotContainer.m_Limelight.GetPose2dBotPose().getRotation().getDegrees());
       }
-      SmartDashboard.putNumber("getDegrees",RobotContainer.m_Limelight.GetPose2dBotPose().getRotation().getDegrees());
+      // SmartDashboard.putNumber("getDegrees",GetLayDowndPreventionDegree());
       SmartDashboard.putBoolean("IsTargetLocked", m_IsTargetLocked);
       SmartDashboard.putNumber("m_TargetLockedTime", m_TargetLockedTime);
+    
     }
     @Override
     public void periodic() {
-      AutoLayDownPrevention();
-      AutoCalibrateOdometry();
+      // AutoCalibrateOdometry();
       m_FieldRelVel = new FieldRelativeSpeed(getChassisSpeeds(), GetGyroRotation2d());
       m_FieldRelAccel = new FieldRelativeAccel(m_FieldRelVel, m_LastFieldRelVel, GlobalConstants.kLoopTime);
       m_LastFieldRelVel = m_FieldRelVel;
@@ -445,7 +442,10 @@ public class SwerveBase extends SubsystemBase {
         GetPositions());
   
       m_Field.setRobotPose(new Pose2d(getPose().getX()+FieldConstants.OdometryToFieldOffsetX,getPose().getY()+FieldConstants.OdometryTOFieldOffsety,getPose().getRotation()));
-      if(m_EnanbleTelemetry){
+      if(m_EnanbleTelemetry){ 
+        
+        // SmartDashboard.putNumber("getDegrees",GetLayDowndPreventionDegree());
+     
         SmartDashboard.putNumber("GetSpeed0", m_SwerveModules[0].GetSpeed());
         SmartDashboard.putNumber("GetSpeed1", m_SwerveModules[1].GetSpeed());
         SmartDashboard.putNumber("GetSpeed2", m_SwerveModules[2].GetSpeed());

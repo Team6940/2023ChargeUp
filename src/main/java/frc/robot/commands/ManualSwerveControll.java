@@ -5,9 +5,13 @@ import frc.robot.RobotContainer;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.library.team1706.MathUtils;
+import edu.wpi.first.hal.simulation.DriverStationDataJNI;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
 public class ManualSwerveControll extends CommandBase {
   /** Creates a new SwerveControll. */
@@ -46,7 +50,8 @@ public class ManualSwerveControll extends CommandBase {
     Translation2d translation = new Translation2d(m_slewX.calculate(
       translationX) * SwerveConstants.kMaxSpeed,
         m_slewY.calculate(translationY) * SwerveConstants.kMaxSpeed);
-
+  if(DriverStation.getAlliance()==Alliance.Red)
+    translation=translation.rotateBy(new Rotation2d(Math.PI));
     RobotContainer.m_SwerveBase.Drive(
         translation,
         m_slewRot.calculate(rotationNew) * DriveConstants.kMaxAngularSpeed,

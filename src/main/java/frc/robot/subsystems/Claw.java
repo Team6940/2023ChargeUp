@@ -44,9 +44,6 @@ public class Claw extends SubsystemBase
     {
         m_ClawSolenoid.set(false);
     }
-    public Object Open() {
-        return null;
-    }
     @Override
     public void periodic()
     {

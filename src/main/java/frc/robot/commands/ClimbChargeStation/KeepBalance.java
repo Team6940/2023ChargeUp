@@ -22,7 +22,7 @@ public class KeepBalance extends CommandBase{
      */
     double[] Transform(double _X,double _Y)
     {
-        double[] _Transformed={};
+        double[] _Transformed={0,_Y};
         return _Transformed;
     }
     @Override
@@ -39,7 +39,7 @@ public class KeepBalance extends CommandBase{
         double _LeanX=_PigeonGyroData[0];
         double _LeanY=_PigeonGyroData[1];
         double[] _TransformedData=Transform(_LeanX,_LeanY);
-        Translation2d _DriveVector=new Translation2d(m_BalancePIDController.calculate(_TransformedData[1]),new Rotation2d(_TransformedData[0]));
+        Translation2d _DriveVector=new Translation2d(m_BalancePIDController.calculate(_TransformedData[0]),new Rotation2d(_TransformedData[0]));
         RobotContainer.m_SwerveBase.Drive(_DriveVector, 0, false, false);
     }
     @Override

@@ -4,17 +4,20 @@
 
 package frc.robot;
 
+import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.Constants.ControllerConstants;
-import frc.robot.commands.CenterControl;
 import frc.robot.commands.ManualSwerveControll;
 import frc.robot.commands.SemiAutoSwerveControll;
 import frc.robot.commands.ClimbChargeStation.KeepBalance;
+import frc.robot.subsystems.Arm;
+import frc.robot.subsystems.DownPrevention;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -25,7 +28,9 @@ import frc.robot.commands.ClimbChargeStation.KeepBalance;
 public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
   private int LastPov=-1;
-  private int m_SelectedGrid=1;
+  private int m_SelectedGrid=0;
+  private int m_SelectedArmState=3;
+  private int m_SelectedAutoProgram=1;
   private RobotContainer m_RobotContainer;
 
   /**
@@ -37,6 +42,7 @@ public class Robot extends TimedRobot {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
     m_RobotContainer = new RobotContainer();
+    CameraServer.startAutomaticCapture();
   }
 
   /**
@@ -57,10 +63,19 @@ public class Robot extends TimedRobot {
 
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
-  public void disabledInit() {}
+  public void disabledInit() {
+    Arm.m_ArmEnabled=false;
+  }
 
   @Override
-  public void disabledPeriodic() {}
+  public void disabledPeriodic() {
+    if(RobotContainer.m_testController.getAButton())
+    {
+      m_SelectedAutoProgram+=1;
+      m_SelectedAutoProgram%=Constants.AutoConstants.AutoBlueCommand.length;
+    }
+    SmartDashboard.putNumber("SelectedAutoProgram", m_SelectedAutoProgram);
+  }
 
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
@@ -69,6 +84,15 @@ public class Robot extends TimedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.schedule();
     }
+    
+    Arm.m_ArmEnabled=true;
+    RobotContainer.m_Arm.SpinTo(0);
+    if(DriverStation.getAlliance()==Alliance.Red)
+    Constants.AutoConstants.AutoRedCommand[m_SelectedAutoProgram].schedule();
+    
+    if(DriverStation.getAlliance()==Alliance.Blue)
+    Constants.AutoConstants.AutoBlueCommand[m_SelectedAutoProgram].schedule();
+    
   }
 
   /** This function is called periodically during autonomous. */
@@ -77,29 +101,42 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
+  
     // This makes sure that the autonomous stops running when
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
     // this line or comment it out.
-    RobotContainer.m_SwerveBase.m_Odometry.resetPosition(new Rotation2d(), RobotContainer.m_SwerveBase.GetPositions(), new Pose2d());
-    RobotContainer.m_SwerveBase.ZeroHeading();
+    // RobotContainer.m_SwerveBase.m_Odometry.resetPosition(new Rotation2d(), RobotContainer.m_SwerveBase.GetPositions(), new Pose2d());
+    // RobotContainer.m_SwerveBase.ZeroHeading();
     RobotContainer.m_SwerveBase.WhetherStoreYaw = false;
+    Arm.m_ArmEnabled=true;
+    RobotContainer.m_Arm.SpinTo(12);
     // CommandScheduler.getInstance().schedule(new CenterControl());
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
+   
   }
 
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
-    if(RobotContainer.m_driverController.getXButtonPressed())
+  RobotContainer.m_Arm.offset=(RobotContainer.m_driverController.getRightTriggerAxis()-RobotContainer.m_driverController.getLeftTriggerAxis())*0.1;
+  if(RobotContainer.m_driverController.getXButtonPressed())
     ManualSwerveControll.SwitchCarlock();
 if(RobotContainer.m_driverController.getXButtonReleased())
     ManualSwerveControll.SwitchCarlock();
 if(RobotContainer.m_driverController.getYButtonPressed())
 {
-    new KeepBalance().schedule();
+  m_SelectedArmState=3;
+}
+if(RobotContainer.m_driverController.getRightStickButtonPressed())
+{
+  SemiAutoSwerveControll.GenerateSemiAutoCommand(RobotContainer.m_SwerveBase.getPose(), true, m_SelectedGrid).schedule();;   
+}
+if(RobotContainer.m_driverController.getLeftStickButtonPressed()&&!RobotContainer.m_driverController.getRightStickButton())
+{
+  SemiAutoSwerveControll.GenerateSemiAutoCommand(RobotContainer.m_SwerveBase.getPose(), false, m_SelectedGrid).schedule();;   
 }
 // if(ControllerConstants.SemiAutoBackButton.getAsBoolean())
 // {
@@ -114,14 +151,24 @@ if(RobotContainer.m_driverController.getYButtonPressed())
     
 // }
 
-if(RobotContainer.m_driverController.getPOV()==270&&LastPov!=270)
+if(RobotContainer.m_driverController.getPOV()==0&&LastPov!=0)
 {
-    m_SelectedGrid-=1;
-    m_SelectedGrid=m_SelectedGrid%9;
+    m_SelectedArmState-=1;
+    m_SelectedArmState=(m_SelectedArmState+7)%7;
+}
+if(RobotContainer.m_driverController.getPOV()==180&&LastPov!=180)
+{
+    m_SelectedArmState+=1;
+    m_SelectedArmState=(m_SelectedArmState+7)%7;
 }
 if(RobotContainer.m_driverController.getPOV()==90&&LastPov!=90)
 {
     m_SelectedGrid+=1;
+    m_SelectedGrid=(m_SelectedGrid+9)%9;
+}
+if(RobotContainer.m_driverController.getPOV()==270&&LastPov!=270)
+{
+    m_SelectedGrid-=1;
     m_SelectedGrid=(m_SelectedGrid+9)%9;
 }
 if(RobotContainer.m_driverController.getLeftBumperPressed())
@@ -132,18 +179,59 @@ if(RobotContainer.m_driverController.getRightBumperPressed())
 {
     RobotContainer.m_Claw.Switch();
 }
+if(RobotContainer.m_testController.getAButtonPressed())
+{
+  RobotContainer.m_DownPrevention.Switch();
+}
 if(RobotContainer.m_driverController.getAButtonPressed())
 {
-  RobotContainer.m_Arm.SpinTo(45);
+  if(m_SelectedArmState==0)
+    RobotContainer.m_Arm.SetState(-5, true);
+  if(m_SelectedArmState==1)  
+      RobotContainer.m_Arm.SetState(30, true);
+      if(m_SelectedArmState==2)
+      RobotContainer.m_Arm.SetState(70, true);
+      if(m_SelectedArmState==3)
+      RobotContainer.m_Arm.SetState(12, true);
+      if(m_SelectedArmState==4)
+      { 
+        
+      RobotContainer.m_Arm.SetState(100, false);
+      
+      }if(m_SelectedArmState==5)
+      {
+        RobotContainer.m_Arm.SetState(140, true);
+      }
+ 
+      if(m_SelectedArmState==6)
+      RobotContainer.m_Arm.SetState(-40, true);
+         
+ 
 }
+if(m_SelectedArmState==0)
+SmartDashboard.putString("SelectedArmState", "GetDown??");
+if(m_SelectedArmState==1)
+    SmartDashboard.putString("SelectedArmState", "Get!!!!!");
+    if(m_SelectedArmState==2)
+  SmartDashboard.putString("SelectedArmState", "PPTGet?????");
+  
+  if(m_SelectedArmState==3)
+  SmartDashboard.putString("SelectedArmState", "Original.");
+  
+  if(m_SelectedArmState==4)
+  SmartDashboard.putString("SelectedArmState", "BackFangClose");
+  
+  if(m_SelectedArmState==5)
+  SmartDashboard.putString("SelectedArmState", "BackFangFar");
 
-if(RobotContainer.m_driverController.getBButtonPressed())
-{
-  RobotContainer.m_Arm.SpinTo(12);
-}
+  if(m_SelectedArmState==6)
+  SmartDashboard.putString("SelectedArmState", "GetDown!!!");
+
+
+SmartDashboard.putNumber("ArmState", m_SelectedArmState);
+
 // RobotContainer.m_Arm.SpinAt((RobotContainer.m_driverController.getRightTriggerAxis()-RobotContainer.m_driverController.getLeftTriggerAxis())*0.5);
-LastPov=RobotContainer.m_driverController.getPOV();
-    SmartDashboard.putNumber("SelectedGrid", m_SelectedGrid);
+LastPov=RobotContainer.m_driverController.getPOV();   SmartDashboard.putNumber("SelectedGrid", m_SelectedGrid);
   }
 
   @Override
