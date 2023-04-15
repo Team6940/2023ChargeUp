@@ -324,4 +324,27 @@ public final class Constants {
         public static JoystickButton SemiAutoBackButton=new JoystickButton(RobotContainer.m_driverController, 10);
         public static JoystickButton SemiAutoGoButton=new JoystickButton(RobotContainer.m_driverController, 9);
     }
+    public static final class ElevatorConstants{
+        public static int ElevatorMotorDeviceNumber=100;
+        public static double ElevatorMotorInkP = 0.0;
+        public static double ElevatorMotorInkI = 0.0;
+        public static double ElevatorMotorInkD = 0.0;
+        public static double ElevatorMotorOutkP = 0.0;
+        public static double ElevatorMotorOutkI = 0.0;
+        public static double ElevatorMotorOutkD = 0.0;
+
+    }
+    public static final class IntakeConstants{
+        public static int IntakeMotorDeviceNumberLeft=100;
+        public static int IntakeMotorDeviceNumberRight=100;
+        public static double IntakeMotorInkP=0.0;
+        public static double IntakeMotorInkI=0.0;
+        public static double IntakeMotorInkD=0.0;
+        public static double IntakeMotorOutkP=0.0;
+        public static double IntakeMotorOutkI=0.0;
+        public static double IntakeMotorOutkD=0.0;
+        public static int INTAKE_SPEED=10000;
+        
+
+    }
 }
