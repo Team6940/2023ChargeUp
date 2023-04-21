@@ -30,35 +30,26 @@ public class Elevator extends SubsystemBase {
     public Elevator(){
         m_ElevatorMotor=new TalonFX(ElevatorConstants.ElevatorMotorDeviceNumber);
         
-        m_ElevatorMotor.setInverted(true);   // 上机调试是否反向
-
-        m_ElevatorMotor.config_kP(0, ElevatorConstants.ElevatorMotorInkP);
-        m_ElevatorMotor.config_kI(0, ElevatorConstants.ElevatorMotorInkI);
-        m_ElevatorMotor.config_kD(0, ElevatorConstants.ElevatorMotorInkD);
-        m_ElevatorMotor.configPeakOutputForward(1);//输出输入最大值，可放Constants也可直接在这里改
-        m_ElevatorMotor.configPeakOutputReverse(-1);
-
-        m_ElevatorMotor.configMotionAcceleration(11111);//待调试
-        m_ElevatorMotor.configMotionCruiseVelocity(11111);
+        m_ElevatorMotor.setInverted(true);   // 上机调试是否反向    
     }
     
     public void outputTelemetry(){
         SmartDashboard.putString("Debug/Elevator/WantedElevatorState", getWantedElevatorState().name());
     }
 
-    public enum ElevatorState {
-        PUSH, PULL, INIT
+    public enum ElevatorState { //enum是枚举类
+        INIT,Stretch_Mid,Stretch_Lower,Stretch_Upper
     }
     
-    private ElevatorState wantedElevatorState = ElevatorState.INIT;
+    private ElevatorState _wantedElevatorState = ElevatorState.INIT;
     
       // this a extern func for other command call.
-    public synchronized void setWantedElevatorState(ElevatorState ElevatorState) {
-        wantedElevatorState = ElevatorState;
+    public synchronized void setWantedElevatorState(ElevatorState _ElevatorState) {
+        _wantedElevatorState = _ElevatorState;
     }
         
     public synchronized ElevatorState getWantedElevatorState() {
-        return wantedElevatorState ;
+        return _wantedElevatorState ;
     }
     
     private void setElevatorMotor(double position) {
@@ -67,32 +58,25 @@ public class Elevator extends SubsystemBase {
     
     private void setElevatorState(ElevatorState ElevatorState) {
         switch (ElevatorState) {
-            case PUSH:
+            case Stretch_Lower:
                 setElevatorMotor(1000001);//待调整
                 break;
-            case PULL:
+            case Stretch_Mid:
                 setElevatorMotor(1000000);
                 break;
+            case Stretch_Upper:
+                setElevatorMotor(10000000);
+                break;
             case INIT:
-                setElevatorMotor(0);
+                setElevatorMotor(100000);
                 break;
         }
     }
 
-    private int fuck = 0;//继承于李嘉安
-    public void autoturnElevator()
-    {
-        if (fuck % 2 == 0) {//学习来的
-        setWantedElevatorState(ElevatorState.PUSH);
-        }else{
-        setWantedElevatorState(ElevatorState.PULL);
-        }
-        fuck++;
-    }
     @Override
     public void periodic() {
         // TODO Auto-generated method stub
-        setElevatorState(wantedElevatorState); 
+        setElevatorState(_wantedElevatorState); 
         outputTelemetry();     
     }
 }

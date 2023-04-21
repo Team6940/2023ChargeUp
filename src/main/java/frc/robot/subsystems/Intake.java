@@ -10,22 +10,20 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.IntakeConstants;
 
-
-
-
+import edu.wpi.first.wpilibj.PneumaticsModuleType;
+import edu.wpi.first.wpilibj.Solenoid;
 
 public class Intake extends SubsystemBase {
+
     public static Intake instance = null;
     public static boolean m_IntakeEnabled=false;
+
     private TalonFX m_IntakeMotorLeft;
     private TalonFX m_IntakeMotorRight;
 
-    //private PIDController m_IntakeMotorInLeftPIDCOntroller=new PIDController(IntakeConstants.IntakeMotorInkP,IntakeConstants.IntakeMotorInkI,IntakeConstants.IntakeMotorInkD);
-    //private PIDController m_IntakeMotorOutLeftPIDCOntroller=new PIDController(IntakeConstants.IntakeMotorOutkP,IntakeConstants.IntakeMotorOutkI,IntakeConstants.IntakeMotorOutkD);
+    private  Solenoid m_IntakeSolenoid;
 
-    //private PIDController m_IntakeMotorInRightPIDCOntroller=new PIDController(IntakeConstants.IntakeMotorInkP,IntakeConstants.IntakeMotorInkI,IntakeConstants.IntakeMotorInkD);
-    //private PIDController m_IntakeMotorOutRightPIDCOntroller=new PIDController(IntakeConstants.IntakeMotorOutkP,IntakeConstants.IntakeMotorOutkI,IntakeConstants.IntakeMotorOutkD);
-
+    
     public static Intake GetInstance()
     {
         if(instance==null)
@@ -43,25 +41,41 @@ public class Intake extends SubsystemBase {
         m_IntakeMotorLeft.setInverted(true);   // 上机调试是否反向
         m_IntakeMotorRight.setInverted(false);   // 上机调试是否反向
 
+        m_IntakeSolenoid =new Solenoid(PneumaticsModuleType.CTREPCM,IntakeConstants.IntakeSolenoidPort);
+
     }
 
     public void OutPutTelemetry(){
         SmartDashboard.putNumber("Debug/Intake/CMotorOutput: ", m_IntakeMotorLeft.getMotorOutputPercent());//在调试板上显示电机输出百分比
         SmartDashboard.putNumber("Debug/Intake/CMotorOutput: ", m_IntakeMotorRight.getMotorOutputPercent());//在调试板上显示电机输出百分比
         SmartDashboard.putString("Debug/Intake/WantedIntake State", getWantedIntakeState().name());//在调试版上输出intake的目标状态
+        SmartDashboard.putString("Debug/Intake/WantedIntakeSolenoid State", getWantedIntakeSolenoidState().name());//在调试版上输出气动杆的目标状态
+
     }
 
     public enum IntakeState {
         INTAKE, EJECT,  OFF
     }
-    private IntakeState wantedIntakeState = IntakeState.OFF;
+    private IntakeState _wantedIntakeState = IntakeState.OFF;
 
-    public synchronized void setWantedIntakeState(IntakeState intakeState) {//设定intake状态
-        wantedIntakeState = intakeState;
+    public enum IntakeSolenoidState{
+        OPEN,  CLOSE
+    }
+    private IntakeSolenoidState _wantedIntakeSolenoidState = IntakeSolenoidState.CLOSE;
+
+    public synchronized void setWantedIntakeState(IntakeState _intakeState) {//设定intake状态
+        _wantedIntakeState = _intakeState;
     }
 
     public synchronized IntakeState getWantedIntakeState() {//获取intake状态
-        return wantedIntakeState ;
+        return _wantedIntakeState ;
+    }
+    public synchronized void setWantedIntakeSolenoidState(IntakeSolenoidState _intakeSolenoidState) {//设定气动杆状态
+        _wantedIntakeSolenoidState = _intakeSolenoidState;
+    }
+
+    public synchronized IntakeSolenoidState getWantedIntakeSolenoidState(){//获取气动杆状态
+        return _wantedIntakeSolenoidState;
     }
 
     private void setIntakeMotor(double speed) {//设定intake电机转速
@@ -73,39 +87,18 @@ public class Intake extends SubsystemBase {
         switch (intakeState) {
             case INTAKE:
                 setIntakeMotor(IntakeConstants.INTAKE_SPEED);
+                m_IntakeSolenoid.set(true);
                 break;
             case OFF:
                 setIntakeMotor(0);
+                m_IntakeSolenoid.set(false);
                 break;
             case EJECT:
                 setIntakeMotor(-IntakeConstants.INTAKE_SPEED);
+                m_IntakeSolenoid.set(true);
             default:
                 break;
         }
-    }
-
-    public void runIntaker() {
-        setWantedIntakeState(IntakeState.INTAKE);
-    }
-
-    public void stopIntaker() {
-        setWantedIntakeState(IntakeState.OFF);
-    }
-    public void ejectIntaker(){
-        setWantedIntakeState(IntakeState.EJECT);
-    }
-
-    private int cnt = 0;
-    public void autoturnintaker()//用cnt周期性地控制intake状态
-    {
-        if(cnt % 2 == 0){
-            
-            setWantedIntakeState(IntakeState.INTAKE);
-        }
-        else{
-            setWantedIntakeState(IntakeState.OFF);
-        }
-        cnt++;
     }
 
     public boolean isIntakerOn(){
@@ -114,7 +107,7 @@ public class Intake extends SubsystemBase {
 
     @Override
     public void periodic() {
-        setIntakeState(wantedIntakeState);//持续地将Intake状态输出到电机上
+        setIntakeState(_wantedIntakeState);
         OutPutTelemetry();
     }   
 }

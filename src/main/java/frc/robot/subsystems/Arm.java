@@ -39,7 +39,7 @@ public class Arm extends SubsystemBase{
     {
         m_ArmMotorUp=new TalonFX(ArmConstants.ArmMotorUpDeviceNumber);
         m_ArmMotorUp.setInverted(true);
-       m_ArmSolenoid =new Solenoid(PneumaticsModuleType.CTREPCM,ArmConstants.ArmSolenoidPort);
+        m_ArmSolenoid =new Solenoid(PneumaticsModuleType.CTREPCM,ArmConstants.ArmSolenoidPort);
         m_ArmMotorUp.config_kP(0, ArmConstants.ArmMotorInkP);
         m_ArmMotorUp.config_kI(0, ArmConstants.ArmMotorInkI);
         m_ArmMotorUp.config_kD(0, ArmConstants.ArmMotorInkD);

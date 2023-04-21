@@ -344,7 +344,15 @@ public final class Constants {
         public static double IntakeMotorOutkI=0.0;
         public static double IntakeMotorOutkD=0.0;
         public static int INTAKE_SPEED=10000;
+
+        public static final int IntakeSolenoidPort=2;
         
 
+    }
+    public static final class ArmNewConstants{
+        public static int ArmMotorDeviceNumber=100;
+        public static int Arm_SPEED=10000;
+
+    
     }
 }
